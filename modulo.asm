@@ -1,12 +1,12 @@
     BITS 32
-    ;constantes
+;constantes del tablero y la flota
 agua            equ     '.'						; 46 en ascii
 tamano_de_fila  equ     10
 celdas          equ     100
 numero_de_barcos equ     5
 
-    ;estas constantes las uso para los modos de la cpu
-modo_principiante equ     1
+;estas constantes las uso para los modos de la cpu
+modo_principiante equ   1
 modo_intermedio equ     2
 modo_experto    equ     3
 disparo_al_agua equ     '~'
@@ -19,6 +19,7 @@ orientacion_horizontal equ     1
 orientacion_vertical equ     2
 
     section .data
+
 barcos_del_jugador:
 	db      "11111....2"
 	db      ".........2"
@@ -151,8 +152,15 @@ eleccion_de_disparo_de_la_CPU:
 	call    sacar_el_objetivo
 	cmp     eax, -1
 	jne     .fin
+	mov byte [numero_de_impactos_del_barco_atacante], 0
+	mov byte [orientacion], no_tiene_orientacion
+	cmp byte [modo_de_juego_de_la_CPU], modo_experto
+	je .ajedrez
 .aleatorio:
 	call    disparo_aleatorio_de_la_CPU
+	jmp .fin
+.ajedrez:
+	call disparo_aleatorio_de_la_CPU_modo_experto
 .fin:
 	ret
 
@@ -169,10 +177,17 @@ registro_resultado_de_la_CPU:
 	je      .hundido
 	cmp     byte [modo_de_juego_de_la_CPU], modo_principiante
 	je      .fin
+	cmp 	byte [modo_de_juego_de_la_CPU], modo_experto
+	je	 	.experto
 	call    agregar_vecinos
 	jmp     .fin
+.experto:
+	call registro_de_impacto_de_la_CPU_modo_experto
+	jmp .fin
 .hundido:
 	mov     byte [numero_de_celdas_en_los_objetivos], 0
+	mov		byte [numero_de_impactos_del_barco_atacante], 0
+	mov		byte [orientacion], no_tiene_orientacion
 .fin:
 	popad
 	ret
@@ -341,5 +356,109 @@ sacar_el_objetivo:
 .fin:
 	pop     ebx
 	ret
+
+;modo experto
+disparo_aleatorio_de_la_CPU_modo_experto:
+    push ebx
+    push ecx
+    push edx
+    push esi
+    mov esi, tamano_de_fila
+    mov ecx, 300
+.intento:
+    mov eax, celdas
+    call rand_range
+    cmp byte [edi + eax], agua
+    jne .otro
+    mov ebx, eax
+    xor edx, edx
+    div esi
+    add eax, edx
+    test eax, 1
+    jnz .otro
+    mov eax, ebx
+    jmp .fin
+.otro:
+    dec ecx 
+    jnz .intento
+    call disparo_aleatorio_de_la_CPU
+.fin:
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+
+registro_de_impacto_de_la_CPU_modo_experto:
+    pushad
+    movzx ebx, byte [numero_de_impactos_del_barco_atacante]
+    test ebx, ebx
+    jnz .siguiente
+    mov [celda_de_impacto_minimo], al
+    mov [celda_de_impacto_maximo], al
+    mov byte [numero_de_impactos_del_barco_atacante], 1
+    call agregar_vecinos
+    jmp .fin
+.siguiente:
+    inc byte [numero_de_impactos_del_barco_atacante]
+    cmp byte [orientacion], no_tiene_orientacion
+    jne .actualizacion
+    movzx ebx, byte [celda_de_impacto_minimo]
+    mov ecx, eax 
+    sub ecx, ebx
+    cmp ecx, 1
+    je .horizontal
+    cmp ecx, -1
+    je .horizontal
+    mov byte [orientacion], orientacion_vertical
+    jmp .actualizacion
+.horizontal:
+    mov byte [orientacion], orientacion_horizontal
+.actualizacion:
+    cmp al, [celda_de_impacto_minimo]
+    jae .maximo
+    mov [celda_de_impacto_minimo], al
+.maximo:
+    cmp al, [celda_de_impacto_maximo]
+    jbe .objetivos
+    mov [celda_de_impacto_maximo], al
+.objetivos:
+    mov byte [numero_de_celdas_en_los_objetivos], 0
+	movzx esi, byte [celda_de_impacto_minimo]
+	movzx ebx, byte [celda_de_impacto_maximo]
+	mov ecx, tamano_de_fila
+	cmp byte [orientacion], orientacion_horizontal
+	jne .linea_vertical
+	mov eax, esi 
+	xor edx, edx
+	div ecx
+	test edx, edx
+	jz .derecha
+	lea eax, [esi - 1]
+	call agregar_objetivo
+.derecha:
+	mov eax, ebx 
+	xor edx, edx
+	div ecx 
+	cmp edx, tamano_de_fila - 1
+	je .fin
+	lea eax, [ebx + 1]
+	call agregar_objetivo
+	jmp .fin
+.linea_vertical:
+	cmp esi, tamano_de_fila
+	jb .abajo
+	lea eax, [esi - tamano_de_fila]
+	call agregar_objetivo
+.abajo:
+	cmp ebx, celdas - tamano_de_fila
+	jae .fin
+	lea eax, [ebx + tamano_de_fila]
+	call agregar_objetivo
+.fin:
+	popad
+	ret
+
 
         section .note.GNU-stack noalloc noexec nowrite progbits
