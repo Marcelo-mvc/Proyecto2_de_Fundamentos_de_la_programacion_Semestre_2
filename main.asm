@@ -92,3 +92,5 @@ print_number:
 	int     0x80
 	popad
 	ret
+
+        section .note.GNU-stack noalloc noexec nowrite progbits
