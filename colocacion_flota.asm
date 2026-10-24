@@ -13,6 +13,11 @@ limpiar_tablero:
 	popad
 	ret
 
+	;esi trae la direccion del tablero
+	;edx trae la horientacion, se la copia a esi, tambien es el paso
+	;ecx trae el tamaño del barco 
+	;ebx se le copia eax que trae la celda
+
 puede_colocar:
 	push ecx 
 	push edx 
@@ -67,6 +72,34 @@ puede_colocar:
 	pop edx
 	pop ecx
 	ret
+
+	; edx = horientacion del barco, tambien es el paso
+	; edi = direccion del barco 
+	; eax = celda
+	; ecx = tamaño del barco
+
+colocar_barco:
+	pushad 
+
+	cmp edx, orientacion_horizontal
+	jne .vertical
+	mov edx, 1
+	jmp .poner
+	
+.vertical:
+	mov edx, tamano_de_fila
+
+.poner:
+	mov [edi + eax], bl
+	add eax, edx
+	sub ecx, 1
+	cmp ecx, 0
+	jne .poner
+	popad 
+	ret
+	
+
+
 
 
 
