@@ -1,0 +1,28 @@
+    section .data
+
+barcos_del_jugador:
+	db      "11111....2"
+	db      ".........2"
+	db      ".........2"
+	db      ".........2"
+	db      ".........."
+	db      "..333....."
+	db      "......4..."
+	db      "......4..."
+	db      "......4..."
+	db      "...55....."
+
+barcos_de_la_CPU:
+	times   celdas db agua
+
+disparos_de_jugador1_hacia_la_CPU:
+	times   celdas db agua
+
+disparos_de_CPU_hacia_el_jugador1:
+	times   celdas db agua
+
+tamano_barcos   db      5, 4, 3, 3, 2
+
+salto_de_linea  db      10
+
+modo_de_juego_de_la_CPU db      modo_principiante
