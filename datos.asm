@@ -13,7 +13,16 @@ global modo_de_juego_de_la_CPU
     section .data
 
 barcos_del_jugador:
-	times   celdas db agua
+	db      "11111....2"
+	db      ".........2"
+	db      ".........2"
+	db      ".........2"
+	db      ".........."
+	db      "..333....."
+	db      "......4..."
+	db      "......4..."
+	db      "......4..."
+	db      "...55....."
 
 barcos_de_la_CPU:
 	times   celdas db agua
